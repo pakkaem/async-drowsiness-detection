@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drowsiness Detection</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100vh;
+        }
+
+        #left-container {
+            display: flex;
+            flex-direction: column;
+            width: 46%;
+            height: 100%;
+            position: relative;
+        }
+
+        #right-container {
+            width: 54%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            border: 1px solid black;
+            margin-bottom: 20px;
+            position: relative;
+            transform: scaleX(-1);
+        }
+
+        .bounding-box {
+            position: absolute;
+            border: 2px solid;
+        }
+
+        .label {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            padding: 4px 6px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 3px;
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        #detection-details {
+            position: absolute;
+            bottom: 30px;
+            left: 5px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+
+        #camera-container {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        #youtube-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #youtube-video {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="left-container">
+            <div id="camera-container">
+                <video id="video" autoplay></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+                <div id="detection-details"></div>
+            </div>
+        </div>
+        <div id="right-container">
+            <div id="youtube-container">        
+                <iframe id="youtube-video" src="https://www.youtube.com/embed/vJs9kL8yRF0" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = "https://drowsiness-service-189935831356.asia-southeast2.run.app/detect-drowsiness";
+        let lastPrediction = null;
+        let eyeDrowsyCounter = 0;
+        let yawningCounter = 0;
+
+        async function sendFrameForPrediction(imageData) {
+            const payload = { image: imageData };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const prediction = await response.json();
+                    processPrediction(prediction);
+                } else {
+                    console.error("Error in API response", response);
+                }
+            } catch (error) {
+                console.error("Error sending frame for prediction:", error);
+            }
+        }
+
+        function processPrediction(prediction) {
+            if (prediction && prediction.drowsiness_results && prediction.drowsiness_results[0]) {
+                const result = prediction.drowsiness_results[0];
+                const isEyeDrowsy = result.is_eye_drowsy;
+                const isYawning = result.is_yawning;
+
+                // Increment counters based on the current prediction
+                if (isEyeDrowsy) eyeDrowsyCounter++;
+                if (isYawning) yawningCounter++;
+
+                lastPrediction = prediction;
+            }
+        }
+
+        function captureAndPredict() {
+            const video = document.getElementById("video");
+            const canvas = document.getElementById("canvas");
+            const context = canvas.getContext("2d");
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
+            sendFrameForPrediction(imageData);
+        }
+
+        function updateUI() {
+            const videoContainer = document.getElementById("camera-container");
+            const video = document.getElementById("video");
+            const detectionDetails = document.getElementById("detection-details");
+
+            // Clear previous bounding boxes
+            videoContainer.querySelectorAll('.bounding-box').forEach(box => box.remove());
+
+            if (lastPrediction && lastPrediction.drowsiness_results && lastPrediction.drowsiness_results[0]) {
+                const result = lastPrediction.drowsiness_results[0];
+                const faceLocation = result.face_location || {};
+                const isEyeDrowsy = result.is_eye_drowsy ? "Yes" : "No";
+                const isYawning = result.is_yawning ? "Yes" : "No";
+                const eyeAspectRatio = result.eye_aspect_ratio ? result.eye_aspect_ratio.toFixed(2) : "N/A";
+                const mouthAspectRatio = result.mouth_aspect_ratio ? result.mouth_aspect_ratio.toFixed(2) : "N/A";
+
+                detectionDetails.innerText = `
+Eye Aspect Ratio: ${eyeAspectRatio}
+Mouth Aspect Ratio: ${mouthAspectRatio}
+Eye Drowsy: ${isEyeDrowsy}
+Yawning: ${isYawning}
+Eye Drowsy Counter: ${eyeDrowsyCounter}
+Yawning Counter: ${yawningCounter}
+                `;
+
+                const flippedX = video.videoWidth - faceLocation.x - faceLocation.width;
+
+                if (faceLocation && faceLocation.x && faceLocation.y && faceLocation.width && faceLocation.height) {
+                    const boundingBox = document.createElement('div');
+                    boundingBox.classList.add('bounding-box');
+                    boundingBox.style.left = `${flippedX}px`;
+                    boundingBox.style.top = `${faceLocation.y}px`;
+                    boundingBox.style.width = `${faceLocation.width}px`;
+                    boundingBox.style.height = `${faceLocation.height}px`;
+                    boundingBox.style.borderColor = "green";
+
+                    const label = document.createElement('div');
+                    label.classList.add('label');
+
+                    const yawningDiv = document.createElement('div');
+                    yawningDiv.textContent = `Yawning: ${isYawning}`;
+
+                    const eyeDrowsyDiv = document.createElement('div');
+                    eyeDrowsyDiv.textContent = `Eye Drowsy: ${isEyeDrowsy}`;
+
+                    label.appendChild(yawningDiv);
+                    label.appendChild(eyeDrowsyDiv);
+                    boundingBox.appendChild(label);
+
+                    videoContainer.appendChild(boundingBox);
+                }
+            } else {
+                detectionDetails.innerText = `
+Eye Aspect Ratio: N/A
+Mouth Aspect Ratio: N/A
+Eye Drowsy: No Data
+Yawning: No Data
+Eye Drowsy Counter: ${eyeDrowsyCounter}
+Yawning Counter: ${yawningCounter}
+                `;
+            }
+
+            requestAnimationFrame(updateUI);
+        }
+
+        async function startVideoStream() {
+            const video = document.getElementById("video");
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                video.play();
+                requestAnimationFrame(updateUI);
+            } catch (err) {
+                console.error("Error: Could not start video stream", err);
+            }
+        }
+
+        window.onload = () => {
+            startVideoStream();
+            setInterval(captureAndPredict, 1000); // Capture and predict every 1 second
+        };
+    </script>
+</body>
+</html>
