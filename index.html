@@ -4,101 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drowsiness Detection</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 0;
-            background-color: #000000;
-            font-family: Arial, sans-serif;
-        }
+        <link rel="stylesheet" href="styles.css">
 
-        .container {
-            display: flex;
-            flex-direction: row;
-            width: 100%;
-            height: 100vh;
-        }
-
-        #left-container {
-            display: flex;
-            flex-direction: column;
-            width: 42%;
-            height: 100%;
-            position: relative;
-        }
-
-        #right-container {
-            width: 58%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        #video {
-            width: 100%;
-            height: 100%;
-            border: 1px solid black;
-            margin-bottom: 20px;
-            position: relative;
-            transform: scaleX(-1);
-        }
-
-        .bounding-box {
-            position: absolute;
-            border: 2px solid;
-        }
-
-        .label {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 12px;
-            padding: 4px 6px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            border-radius: 3px;
-            position: absolute;
-            top: -45px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        #detection-details {
-            position: absolute;
-            bottom: 30px;
-            left: 5px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 4px 6px;
-            border-radius: 3px;
-            font-size: 12px;
-            text-align: left;
-            white-space: pre-wrap;
-        }
-
-        #camera-container {
-            position: relative;
-            margin-top: 10px;
-        }
-
-        #youtube-container {
-            width: 100%;
-            height: 100%;
-        }
-
-        #youtube-video {
-            width: 100%;
-            height: 100%;
-        }
-    </style>
 </head>
 <body>
+    <div class="popup" id="videoPopup" >
+        <div class="popup-content">
+            <h2>Pilih Video</h2>
+            <div class="video-options">
+                <button data-url="https://www.youtube.com/embed/ZIB0IY_W2og">Video 1 - TOEFL Subject & Verbs</button>
+                <button data-url="https://www.youtube.com/embed/gMN-Mvbgkys">Video 2 - TOEFL Adjective & Adverbs</button>
+                <button data-url="https://www.youtube.com/embed/ijlHLqO4-lo">Video 3 - TOEFL Possesives</button>
+                <button data-url="https://www.youtube.com/embed/nv2RrzXhlKw">Video 4 - TOEFL Countable & Uncountable Nouns </button>
+                <button data-url="https://www.youtube.com/embed/zEQC6ZWFD4c">Video 5 - TOEFL Singular and Plural Nouns</button>
+                <button data-url="https://www.youtube.com/embed/lTMZxWMjXQU">Video 6 - Git dan GitHub</button>
+                <button data-url="https://www.youtube.com/embed/HqAMb6kqlLs">Video 7 - Laravel 8</button>
+                <button data-url="https://www.youtube.com/embed/sSLJx5t4OJ4">Video 8 - NodeJS</button>
+                <button data-url="https://www.youtube.com/embed/iA8lLwmtKQM">Video 9 - Python</button>
+                <button data-url="https://www.youtube.com/embed/Ak6VTSekGP4">Video 10 - PHP</button>
+            </div>
+            <div class="custom-url">
+                <p class="custom-url-note">Pengguna bisa memasukkan video URL YouTube selain pilihan di atas untuk ditonton</p>
+                <p class="url-instruction">Contoh format URL Embed: https://www.youtube.com/embed/VIDEO_ID</p>
+                <input type="text" id="customVideoUrl" placeholder="Masukkan Video URL YouTube Embed">
+                <button id="customVideoButton">Play Custom Video</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <div id="left-container">
             <div id="camera-container">
@@ -109,7 +42,7 @@
         </div>
         <div id="right-container">
             <div id="youtube-container">        
-                <iframe id="youtube-video" src="https://www.youtube.com/embed/vJs9kL8yRF0" frameborder="0" allow="autoplay; encrypted-media"></iframe>
+                <iframe id="youtube-video" src="" frameborder="0" allow="autoplay; encrypted-media"></iframe>
             </div>
         </div>
     </div>
@@ -147,7 +80,6 @@
                 const isEyeDrowsy = result.is_eye_drowsy;
                 const isYawning = result.is_yawning;
 
-                // Increment counters based on the current prediction
                 if (isEyeDrowsy) eyeDrowsyCounter++;
                 if (isYawning) yawningCounter++;
 
@@ -173,7 +105,6 @@
             const video = document.getElementById("video");
             const detectionDetails = document.getElementById("detection-details");
 
-            // Clear previous bounding boxes
             videoContainer.querySelectorAll('.bounding-box').forEach(box => box.remove());
 
             if (lastPrediction && lastPrediction.drowsiness_results && lastPrediction.drowsiness_results[0]) {
@@ -245,9 +176,38 @@ Yawning Counter: ${yawningCounter}
             }
         }
 
+        function initializePopup() {
+            const popup = document.getElementById("videoPopup");
+            const buttons = popup.querySelectorAll(".video-options button");
+            const customButton = document.getElementById("customVideoButton");
+            const customInput = document.getElementById("customVideoUrl");
+
+            buttons.forEach(button => {
+                button.addEventListener("click", () => {
+                    const url = button.getAttribute("data-url");
+                    setVideoUrl(url);
+                    popup.style.display = "none";
+                });
+            });
+
+            customButton.addEventListener("click", () => {
+                const url = customInput.value;
+                if (url) {
+                    setVideoUrl(url);
+                    popup.style.display = "none";
+                }
+            });
+        }
+
+        function setVideoUrl(url) {
+            const iframe = document.getElementById("youtube-video");
+            iframe.src = url;
+        }
+
         window.onload = () => {
+            initializePopup();
             startVideoStream();
-            setInterval(captureAndPredict, 1000); // Capture and predict every 1 second
+            setInterval(captureAndPredict, 1000);
         };
     </script>
 </body>
