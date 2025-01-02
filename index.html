@@ -25,8 +25,8 @@
             </div>
             <div class="custom-url">
                 <p class="custom-url-note">Pengguna bisa memasukkan video URL YouTube selain pilihan di atas untuk ditonton</p>
-                <p class="url-instruction">Contoh format URL Embed: https://www.youtube.com/embed/VIDEO_ID</p>
-                <input type="text" id="customVideoUrl" placeholder="Masukkan Video URL YouTube Embed">
+                <p class="url-instruction">Contoh format URL: https://www.youtube.com/watch?v=VIDEO_ID</p>
+                <input type="text" id="customVideoUrl" placeholder="Masukkan URL Video YouTube">
                 <button id="customVideoButton">Play Custom Video</button>
             </div>
         </div>
@@ -176,6 +176,34 @@ Yawning Counter: ${yawningCounter}
             }
         }
 
+        function getYouTubeVideoId(url) {
+            try {
+                // Handle different YouTube URL formats
+                let videoId = '';
+                
+                // Format: https://www.youtube.com/watch?v=VIDEO_ID
+                if (url.includes('watch?v=')) {
+                    videoId = url.split('watch?v=')[1];
+                }
+                // Format: https://youtu.be/VIDEO_ID
+                else if (url.includes('youtu.be/')) {
+                    videoId = url.split('youtu.be/')[1];
+                }
+                // Format: https://www.youtube.com/embed/VIDEO_ID
+                else if (url.includes('embed/')) {
+                    videoId = url.split('embed/')[1];
+                }
+
+                // Remove any additional parameters
+                videoId = videoId.split('&')[0];
+                
+                return videoId;
+            } catch (error) {
+                console.error('Error parsing YouTube URL:', error);
+                return null;
+            }
+        }
+
         function initializePopup() {
             const popup = document.getElementById("videoPopup");
             const buttons = popup.querySelectorAll(".video-options button");
@@ -191,10 +219,16 @@ Yawning Counter: ${yawningCounter}
             });
 
             customButton.addEventListener("click", () => {
-                const url = customInput.value;
+                const url = customInput.value.trim();
                 if (url) {
-                    setVideoUrl(url);
-                    popup.style.display = "none";
+                    const videoId = getYouTubeVideoId(url);
+                    if (videoId) {
+                        const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                        setVideoUrl(embedUrl);
+                        popup.style.display = "none";
+                    } else {
+                        alert('URL YouTube tidak valid. Pastikan format URL benar.');
+                    }
                 }
             });
         }
