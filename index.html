@@ -52,6 +52,11 @@
         let lastPrediction = null;
         let eyeDrowsyCounter = 0;
         let yawningCounter = 0;
+        let isCurrentlyDrowsy = false;
+        let isCurrentlyYawning = false;
+        let lastEyeAspectRatio = null; 
+        let lastMouthAspectRatio = null; 
+
 
         async function sendFrameForPrediction(imageData) {
             const payload = { image: imageData };
@@ -77,14 +82,36 @@
         function processPrediction(prediction) {
             if (prediction && prediction.drowsiness_results && prediction.drowsiness_results[0]) {
                 const result = prediction.drowsiness_results[0];
-                const isEyeDrowsy = result.is_eye_drowsy;
-                const isYawning = result.is_yawning;
+                const currentEAR = result.eye_aspect_ratio;
+                const currentMAR = result.mouth_aspect_ratio;
+                
+                if (currentEAR < 0.20) {
+                    if (!isCurrentlyDrowsy) {
+                        eyeDrowsyCounter++;
+                        isCurrentlyDrowsy = true;
+                    }
+                } else {
+                    if (isCurrentlyDrowsy) {
+                        isCurrentlyDrowsy = false;
+                    }
+                }
 
-                if (isEyeDrowsy) eyeDrowsyCounter++;
-                if (isYawning) yawningCounter++;
+                if (currentMAR > 0.70) {
+                    if (!isCurrentlyYawning) {
+                        yawningCounter++;
+                        isCurrentlyYawning = true;
+                    }
+                } else {
+                    if (isCurrentlyYawning) {
+                        isCurrentlyYawning = false;
+                    }
+                }
 
+                lastEyeAspectRatio = currentEAR;
+                lastMouthAspectRatio = currentMAR;
                 lastPrediction = prediction;
             }
+
         }
 
         function captureAndPredict() {
@@ -110,6 +137,8 @@
             if (lastPrediction && lastPrediction.drowsiness_results && lastPrediction.drowsiness_results[0]) {
                 const result = lastPrediction.drowsiness_results[0];
                 const faceLocation = result.face_location || {};
+                const currentEAR = result.eye_aspect_ratio;
+                const currentMAR = result.mouth_aspect_ratio;
                 const isEyeDrowsy = result.is_eye_drowsy ? "Yes" : "No";
                 const isYawning = result.is_yawning ? "Yes" : "No";
                 const eyeAspectRatio = result.eye_aspect_ratio ? result.eye_aspect_ratio.toFixed(2) : "N/A";
@@ -124,15 +153,28 @@ Eye Drowsy Counter: ${eyeDrowsyCounter}
 Yawning Counter: ${yawningCounter}
                 `;
 
-                const flippedX = video.videoWidth - faceLocation.x - faceLocation.width;
+                // Add padding adjustment (decrease these values to make box tighter)
+                    const padding = {
+                        x: 10,  // horizontal padding in pixels
+                        y: 10   // vertical padding in pixels
+                    };
+                    
+                    // Adjust bounding box dimensions
+                    const adjustedLocation = {
+                        x: faceLocation.x + padding.x,
+                        y: faceLocation.y + padding.y,
+                        width: faceLocation.width - (padding.x * 2),
+                        height: faceLocation.height - (padding.y * 2)
+                    };
+                    const flippedX = video.videoWidth - faceLocation.x - faceLocation.width;
 
                 if (faceLocation && faceLocation.x && faceLocation.y && faceLocation.width && faceLocation.height) {
                     const boundingBox = document.createElement('div');
                     boundingBox.classList.add('bounding-box');
                     boundingBox.style.left = `${flippedX}px`;
-                    boundingBox.style.top = `${faceLocation.y}px`;
-                    boundingBox.style.width = `${faceLocation.width}px`;
-                    boundingBox.style.height = `${faceLocation.height}px`;
+                    boundingBox.style.top = `${adjustedLocation.y}px`;
+                    boundingBox.style.width = `${adjustedLocation.width}px`;
+                    boundingBox.style.height = `${adjustedLocation.height}px`;
                     boundingBox.style.borderColor = "green";
 
                     const label = document.createElement('div');
