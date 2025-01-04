@@ -19,19 +19,19 @@ body {
 #left-container {
     display: flex;
     flex-direction: column;
-    width: 42%;
+    width: 45%;
     height: 100%;
     position: relative;
 }
 
 #right-container {
-    width: 58%;
+    width: 55%;
     height: 100%;
     overflow: hidden;
 }
 
 #video {
-    width: 100%;
+    width: 640px;
     height: 100%;
     border: 1px solid black;
     margin-bottom: 20px;
