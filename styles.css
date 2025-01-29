@@ -108,8 +108,8 @@ body {
     padding: 20px;
     border-radius: 10px;
     text-align: center;
-    width: 80%;
-    max-width: 400px;
+    width: 90%;
+    max-width: 800px;
 }
 
 .popup-content h2 {
@@ -118,90 +118,38 @@ body {
 
 .video-options {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
-.video-options button {
+.video-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 48%;
+}
+
+.video-column button {
     padding: 10px;
     border: none;
     border-radius: 5px;
     background-color: #007BFF;
     color: white;
     cursor: pointer;
-}
-
-.video-options button:hover {
-    background-color: #0056b3;
-}
-
-.custom-url {
-    margin-top: 20px;
-}
-
-.custom-url input {
-    width: 95%;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.custom-url button {
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #28a745;
-    color: white;
-    cursor: pointer;
-}
-
-.custom-url button:hover {
-    background-color: #218838;
-}
-.popup {
-    position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+    text-align: left;
 }
 
-.popup-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    width: 80%;
-    max-width: 400px;
-}
-
-.popup-content h2 {
-    margin-bottom: 20px;
-}
-
-.video-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.video-options button {
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-}
-
-.video-options button:hover {
+.video-column button:hover {
     background-color: #0056b3;
+}
+
+.right-column button {
+    background-color: #6c757d;
+}
+
+.right-column button:hover {
+    background-color: #5a6268;
 }
 
 .custom-url {
@@ -227,24 +175,26 @@ body {
 
 .custom-url button:hover {
     background-color: #218838;
-}
-
-.switch-popup {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #FF5733;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
 }
 
 .custom-url-note {
-    font-size: 12px; 
-    text-align: left; 
-    margin-bottom: 10px; 
+    font-size: 12px;
+    text-align: left;
+    margin-bottom: 10px;
 }
+
 .url-instruction {
-    font-size: 10px; 
-    text-align: justify; 
-    margin-bottom: 10px; 
+    font-size: 10px;
+    text-align: justify;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .video-options {
+        flex-direction: column;
+    }
+    
+    .video-column {
+        width: 100%;
+    }
 }
