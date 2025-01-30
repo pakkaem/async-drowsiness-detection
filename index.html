@@ -52,6 +52,7 @@
                 <video id="video" autoplay></video>
                 <canvas id="canvas" style="display:none;"></canvas>
                 <div id="detection-details"></div>
+                <div id="alarm-status"></div>
             </div>
         </div>
         <div id="right-container">
@@ -71,6 +72,50 @@
         let lastEyeAspectRatio = null; 
         let lastMouthAspectRatio = null; 
 
+        // Add alarm-related variables
+        let drowsyStartTime = null;
+        let alarmASound = new Audio('Alarm A.mp3');
+        let alarmBSound = new Audio('Alarm B.mp3');
+        let isAlarmAPlaying = false;
+        let isAlarmBPlaying = false;
+        
+        function playAlarmA() {
+            if (!isAlarmAPlaying) {
+                alarmASound.play();
+                isAlarmAPlaying = true;
+                updateAlarmStatus('Alarm A: Kantuk Terdeteksi!');
+                setTimeout(() => {
+                    isAlarmAPlaying = false;
+                    updateAlarmStatus('');
+                }, 2000);
+            }
+        }
+
+        function playAlarmB() {
+            if (!isAlarmBPlaying) {
+                alarmBSound.play();
+                isAlarmBPlaying = true;
+                updateAlarmStatus('Alarm B: Kantuk Berkelanjutan Terdeteksi!');
+                setTimeout(() => {
+                    isAlarmBPlaying = false;
+                    updateAlarmStatus('');
+                }, 3000);
+            }
+        }
+
+        function updateAlarmStatus(message) {
+            const statusDiv = document.getElementById('alarm-status');
+            statusDiv.textContent = message;
+            if (message) {
+                statusDiv.style.backgroundColor = '#ff4444';
+                statusDiv.style.color = 'white';
+                statusDiv.style.padding = '10px';
+                statusDiv.style.borderRadius = '5px';
+                statusDiv.style.marginTop = '10px';
+            } else {
+                statusDiv.style.backgroundColor = 'transparent';
+            }
+        }
 
         async function sendFrameForPrediction(imageData) {
             const payload = { image: imageData };
@@ -103,10 +148,19 @@
                     if (!isCurrentlyDrowsy) {
                         eyeDrowsyCounter++;
                         isCurrentlyDrowsy = true;
+                        playAlarmA(); // Play immediate alarm
+                        drowsyStartTime = Date.now(); // Start timing the drowsiness
+                    } else {
+                        // Check if drowsiness has persisted for 3 seconds
+                        const drowsyDuration = Date.now() - drowsyStartTime;
+                        if (drowsyDuration >= 3000) { // 3 seconds
+                            playAlarmB();
+                        }
                     }
                 } else {
                     if (isCurrentlyDrowsy) {
                         isCurrentlyDrowsy = false;
+                        drowsyStartTime = null;
                     }
                 }
 
