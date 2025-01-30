@@ -74,16 +74,19 @@
 
         // Add alarm-related variables
         let drowsyStartTime = null;
+        let yawningStartTime = null;
         let alarmASound = new Audio('Alarm A.mp3');
         let alarmBSound = new Audio('Alarm B.mp3');
+        let alarmCSound = new Audio('Alarm A.mp3');
         let isAlarmAPlaying = false;
         let isAlarmBPlaying = false;
+        let isAlarmCPlaying = false;
         
         function playAlarmA() {
             if (!isAlarmAPlaying) {
                 alarmASound.play();
                 isAlarmAPlaying = true;
-                updateAlarmStatus('Alarm A: Kantuk Terdeteksi!');
+                updateAlarmStatus('Kantuk Terdeteksi!');
                 setTimeout(() => {
                     isAlarmAPlaying = false;
                     updateAlarmStatus('');
@@ -95,11 +98,23 @@
             if (!isAlarmBPlaying) {
                 alarmBSound.play();
                 isAlarmBPlaying = true;
-                updateAlarmStatus('Alarm B: Kantuk Berkelanjutan Terdeteksi!');
+                updateAlarmStatus('Kantuk Berkelanjutan Terdeteksi!');
                 setTimeout(() => {
                     isAlarmBPlaying = false;
                     updateAlarmStatus('');
                 }, 3000);
+            }
+        }
+
+        function playAlarmC() {
+            if (!isAlarmCPlaying) {
+                alarmCSound.play();
+                isAlarmCPlaying = true;
+                updateAlarmStatus('Terdeteksi Menguap!');
+                setTimeout(() => {
+                    isAlarmCPlaying = false;
+                    updateAlarmStatus('');
+                }, 2000);
             }
         }
 
@@ -168,6 +183,8 @@
                     if (!isCurrentlyYawning) {
                         yawningCounter++;
                         isCurrentlyYawning = true;
+                        playAlarmC(); // Single yawn alert
+                        recentYawns.push(Date.now()); // Add timestamp to recent yawns
                     }
                 } else {
                     if (isCurrentlyYawning) {
